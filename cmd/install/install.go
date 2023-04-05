@@ -226,6 +226,7 @@ func apply(ctx context.Context, objects []crclient.Object) error {
 		return err
 	}
 
+	var errs []error
 	for _, object := range objects {
 		var objectBytes bytes.Buffer
 		err := hyperapi.YamlSerializer.Encode(object, &objectBytes)
@@ -245,13 +246,13 @@ func apply(ctx context.Context, objects []crclient.Object) error {
 			}
 		} else {
 			if err := client.Patch(ctx, object, crclient.RawPatch(types.ApplyPatchType, objectBytes.Bytes()), crclient.ForceOwnership, crclient.FieldOwner("hypershift")); err != nil {
-				return err
+				errs = append(errs, err)
 			}
 			fmt.Printf("applied %s %s/%s\n", object.GetObjectKind().GroupVersionKind().Kind, object.GetNamespace(), object.GetName())
 		}
 	}
 
-	return nil
+	return errors.NewAggregate(errs)
 }
 
 func waitUntilAvailable(ctx context.Context, opts Options) error {
@@ -655,11 +656,11 @@ func hyperShiftOperatorManifests(opts Options) ([]crclient.Object, error) {
 	}
 
 	for idx := range objects {
-		gvk, err := apiutil.GVKForObject(objects[idx], hyperapi.InstallScheme)
+		gvk, err := apiutil.GVKForObject(objects[idx], hyperapi.Scheme)
 		if err != nil {
 			return nil, fmt.Errorf("failed to look up gvk for %T: %w", objects[idx], err)
 		}
-		// Everything that embeds metav1.TypeMeta implements this
+		// Everything that embedds metav1.TypeMeta implements this
 		objects[idx].(interface {
 			SetGroupVersionKind(gvk schema.GroupVersionKind)
 		}).SetGroupVersionKind(gvk)
