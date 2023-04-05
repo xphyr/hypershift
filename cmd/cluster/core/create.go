@@ -64,6 +64,7 @@ type CreateOptions struct {
 	NodeSelector                     map[string]string
 	NonePlatform                     NonePlatformCreateOptions
 	KubevirtPlatform                 KubevirtPlatformCreateOptions
+	VSpherePlatform                  VSpherePlatformCreateOptions
 	AWSPlatform                      AWSPlatformOptions
 	AgentPlatform                    AgentPlatformCreateOptions
 	AzurePlatform                    AzurePlatformOptions
@@ -110,6 +111,19 @@ type NonePlatformCreateOptions struct {
 }
 
 type KubevirtPlatformCreateOptions struct {
+	ServicePublishingStrategy string
+	APIServerAddress          string
+	Memory                    string
+	Cores                     uint32
+	ContainerDiskImage        string
+	RootVolumeSize            uint32
+	RootVolumeStorageClass    string
+	RootVolumeAccessModes     string
+	InfraKubeConfigFile       string
+	InfraNamespace            string
+}
+
+type VSpherePlatformCreateOptions struct {
 	ServicePublishingStrategy string
 	APIServerAddress          string
 	Memory                    string

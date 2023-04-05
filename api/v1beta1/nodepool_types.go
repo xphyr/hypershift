@@ -345,6 +345,11 @@ type NodePoolPlatform struct {
 	// +optional
 	Kubevirt *KubevirtNodePoolPlatform `json:"kubevirt,omitempty"`
 
+	// Kubevirt specifies the configuration used when operating on vSphere platform.
+	//
+	// +optional
+	VSphere *VSphereNodePoolPlatform `json:"vsphere,omitempty"`
+
 	// Agent specifies the configuration used when using Agent platform.
 	//
 	// +optional
@@ -774,4 +779,98 @@ type Taint struct {
 	// that do not tolerate the taint.
 	// Valid effects are NoSchedule, PreferNoSchedule and NoExecute.
 	Effect corev1.TaintEffect `json:"effect"`
+}
+
+// ---- added for vspehere----
+
+// KubevirtVolumeType is a specific supported VSphere volumes
+//
+// +kubebuilder:validation:Enum=Persistent
+type VSphereVolumeType string
+
+const (
+	// VSphereVolumeTypePersistent represents persistent volume for kubevirt VMs
+	VSphereVolumeTypePersistent VSphereVolumeType = "Persistent"
+)
+
+// KubevirtVolume represents what kind of storage to use for a VSphere VM volume
+type VSphereVolume struct {
+	// Type represents the type of storage to associate with the kubevirt VMs.
+	//
+	// +optional
+	// +unionDiscriminator
+	// +kubebuilder:default=Persistent
+	Type VSphereVolumeType `json:"type"`
+
+	// Persistent volume type means the VM's storage is backed by a PVC
+	// VMs that use persistent volumes can survive disruption events like restart and eviction
+	// This is the default type used when no storage type is defined.
+	//
+	// +optional
+	Persistent *VSpherePersistentVolume `json:"persistent,omitempty"`
+}
+
+// VSphereDiskImage contains values representing where the rhcos image is located
+type VSphereDiskImage struct {
+	// ContainerDiskImage is a string representing the container image that holds the root disk
+	//
+	// +optional
+	ContainerDiskImage *string `json:"containerDiskImage,omitempty"`
+}
+
+// KubevirtNodePoolPlatform specifies the configuration of a NodePool when operating
+// on KubeVirt platform.
+type VSphereNodePoolPlatform struct {
+	// RootVolume represents values associated with the VM volume that will host rhcos
+	RootVolume *VSphereRootVolume `json:"rootVolume"`
+
+	// Compute contains values representing the virtual hardware requested for the VM
+	//
+	// +optional
+	// +kubebuilder:default={memory: "4Gi", cores: 2}
+	Compute *VSphereCompute `json:"compute"`
+}
+
+// KubevirtCompute contains values associated with the virtual compute hardware requested for the VM.
+type VSphereCompute struct {
+	// Memory represents how much guest memory the VM should have
+	//
+	// +optional
+	// +kubebuilder:default="4Gi"
+	Memory *resource.Quantity `json:"memory"`
+
+	// Cores represents how many cores the guest VM should have
+	//
+	// +optional
+	// +kubebuilder:default=2
+	Cores *uint32 `json:"cores"`
+}
+
+// KubevirtPersistentVolume contains the values involved with provisioning persistent storage for a KubeVirt VM.
+type VSpherePersistentVolume struct {
+	// Size is the size of the persistent storage volume
+	//
+	// +optional
+	// +kubebuilder:default="16Gi"
+	Size *resource.Quantity `json:"size"`
+	// StorageClass is the storageClass used for the underlying PVC that hosts the volume
+	//
+	// +optional
+	StorageClass *string `json:"storageClass,omitempty"`
+	// AccessModes is an array that contains the desired Access Modes the root volume should have.
+	// More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes
+	//
+	// +optional
+	AccessModes []PersistentVolumeAccessMode `json:"accessModes,omitempty"`
+}
+
+// KubevirtRootVolume represents the volume that the rhcos disk will be stored and run from.
+type VSphereRootVolume struct {
+	// Image represents what rhcos image to use for the node pool
+	//
+	// +optional
+	Image *KubevirtDiskImage `json:"diskImage,omitempty"`
+
+	// KubevirtVolume represents of type of storage to run the image on
+	KubevirtVolume `json:",inline"`
 }

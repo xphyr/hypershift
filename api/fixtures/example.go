@@ -78,6 +78,7 @@ type ExampleOptions struct {
 	None                             *ExampleNoneOptions
 	Agent                            *ExampleAgentOptions
 	Kubevirt                         *ExampleKubevirtOptions
+	VSphere                          *ExampleVSphereOptions
 	Azure                            *ExampleAzureOptions
 	PowerVS                          *ExamplePowerVSOptions
 	NetworkType                      hyperv1.NetworkType
